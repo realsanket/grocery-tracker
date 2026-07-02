@@ -23,7 +23,7 @@ export function PriceCompareBars({ prices }: { prices: StorePriceRow[] }) {
         const deltaPct = min > 0 ? Math.round(((value - min) / min) * 100) : 0;
         return (
           <li key={p.storeId}>
-            <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
+            <div className="mb-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-sm">
               <span>
                 <Link
                   href={`/stores/${p.storeId}`}
