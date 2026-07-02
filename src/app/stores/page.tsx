@@ -12,7 +12,7 @@ export default async function StoresPage() {
     <div>
       <PageHeader
         title="Stores"
-        subtitle="Supermarkets where prices have been observed."
+        subtitle="Pick a store to see what is worth buying there — and what is cheaper elsewhere."
       />
       {stores.length === 0 ? (
         <EmptyState
