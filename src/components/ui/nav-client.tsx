@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/", label: "Dashboard" },
   { href: "/products", label: "Products" },
   { href: "/stores", label: "Stores" },
+  { href: "/list", label: "Shopping List" },
 ];
 
 export function NavLinks({ showUpload }: { showUpload: boolean }) {
