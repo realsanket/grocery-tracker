@@ -33,7 +33,7 @@ export default async function StoreDetailPage({
   return (
     <div>
       <div className="mb-1 text-sm">
-        <Link href="/stores" className="text-stone-400 hover:text-stone-600">
+        <Link href="/stores" className="text-ink-faint hover:text-ink-soft">
           ← Stores
         </Link>
       </div>
@@ -62,15 +62,15 @@ export default async function StoreDetailPage({
               {latestProducts.map((p) => {
                 const size = formatSize(p.sizeValue, p.sizeUnit);
                 return (
-                  <tr key={p.productId} className="hover:bg-stone-50">
+                  <tr key={p.productId} className="hover:bg-muted/50">
                     <Td>
                       <Link
                         href={`/products/${p.productId}`}
-                        className="font-medium text-stone-900 hover:underline"
+                        className="font-medium text-foreground hover:underline"
                       >
                         {p.canonicalNameEn}
                       </Link>
-                      {size && <span className="ml-1.5 text-stone-400">{size}</span>}
+                      {size && <span className="ml-1.5 text-ink-faint">{size}</span>}
                       {p.isWeighted && (
                         <span className="ml-2">
                           <Badge tone="amber">by weight</Badge>
@@ -80,10 +80,10 @@ export default async function StoreDetailPage({
                     <Td className="font-medium">
                       {formatPrice(p.unitPrice ?? p.lineTotal, p.currency)}
                     </Td>
-                    <Td className="text-stone-500">
+                    <Td className="text-ink-soft">
                       {p.pricePerKg ? `${formatPrice(p.pricePerKg, p.currency)}/kg` : "—"}
                     </Td>
-                    <Td className="text-stone-500">{formatDate(p.observedDate)}</Td>
+                    <Td className="text-ink-soft">{formatDate(p.observedDate)}</Td>
                   </tr>
                 );
               })}

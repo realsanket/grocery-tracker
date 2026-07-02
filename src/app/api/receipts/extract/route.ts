@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getExtractor, ExtractionError } from "@/lib/ai/extractor";
-import { ingestReceipt, recordFailedRun } from "@/db/mutations/ingest-receipt";
+import { recordFailedRun } from "@/db/mutations/ingest-receipt";
 
 // Vision extraction can take tens of seconds.
 export const maxDuration = 60;
@@ -8,6 +8,11 @@ export const maxDuration = 60;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_BYTES = 8 * 1024 * 1024;
 
+/**
+ * Step 1 of ingestion: extract a draft from the receipt image.
+ * Nothing is persisted here — the admin reviews/edits the draft in the UI
+ * and saves it via POST /api/receipts/commit.
+ */
 export async function POST(request: Request) {
   let filename: string | undefined;
   try {
@@ -36,25 +41,13 @@ export async function POST(request: Request) {
 
     // The image lives only in memory for the duration of this request.
     const buffer = Buffer.from(await file.arrayBuffer());
-    const extraction = await getExtractor().extractReceiptProducts({
+    const draft = await getExtractor().extractReceiptProducts({
       buffer,
       mimeType: file.type,
       filename: file.name,
     });
 
-    const result = await ingestReceipt(extraction, file.name);
-
-    return NextResponse.json({
-      success: true,
-      store: result.store,
-      storeId: result.storeId,
-      observedDate: result.observedDate,
-      currency: result.currency,
-      itemsInserted: result.itemsInserted,
-      productsCreated: result.productsCreated,
-      productsMatched: result.productsMatched,
-      items: result.items,
-    });
+    return NextResponse.json({ success: true, draft, sourceFilename: file.name });
   } catch (err) {
     const message =
       err instanceof ExtractionError

@@ -20,7 +20,7 @@ export default async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/upload")) {
     if (!authed) {
-      const loginUrl = new URL("/login", request.url);
+      const loginUrl = new URL("/admin", request.url);
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
     }

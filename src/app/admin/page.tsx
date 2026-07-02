@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/primitives";
+import { BasketIcon } from "@/components/ui/icons";
 
 function LoginForm() {
   const router = useRouter();
@@ -38,25 +39,36 @@ function LoginForm() {
   return (
     <div className="mx-auto mt-16 max-w-sm">
       <Card className="p-6">
-        <h1 className="text-lg font-semibold tracking-tight">Admin login</h1>
-        <p className="mt-1 text-sm text-stone-500">
-          Only the admin can upload receipts. Browsing and price comparison stay public.
+        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
+          <BasketIcon size={20} />
+        </div>
+        <h1 className="font-mono text-lg font-semibold tracking-tight">Admin sign-in</h1>
+        <p className="mt-1 text-sm text-ink-soft">
+          Uploading receipts requires the admin password.
         </p>
         <form onSubmit={handleSubmit} className="mt-5 space-y-3">
+          <label htmlFor="password" className="block text-sm font-medium">
+            Password
+          </label>
           <input
+            id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Admin password"
             autoFocus
             required
-            className="w-full rounded-lg border border-stone-300 px-3.5 py-2 text-sm outline-none placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+            autoComplete="current-password"
+            className="w-full rounded-lg border border-line px-3.5 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
           />
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p role="alert" className="text-sm text-danger">
+              {error}
+            </p>
+          )}
           <button
             type="submit"
             disabled={loading || !password}
-            className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+            className="w-full cursor-pointer rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-primary-strong disabled:cursor-default disabled:opacity-50"
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>
@@ -66,7 +78,7 @@ function LoginForm() {
   );
 }
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   return (
     <Suspense>
       <LoginForm />

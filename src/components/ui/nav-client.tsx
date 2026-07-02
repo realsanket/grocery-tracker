@@ -24,10 +24,10 @@ export function NavLinks({ showUpload }: { showUpload: boolean }) {
           <Link
             key={link.href}
             href={link.href}
-            className={`rounded-md px-3 py-1.5 transition-colors ${
+            className={`cursor-pointer rounded-md px-3 py-1.5 transition-colors duration-150 ${
               active
-                ? "bg-stone-100 font-medium text-stone-900"
-                : "text-stone-500 hover:bg-stone-50 hover:text-stone-900"
+                ? "bg-muted font-medium text-primary-strong"
+                : "text-ink-soft hover:bg-muted/70 hover:text-foreground"
             }`}
           >
             {link.label}
@@ -47,7 +47,7 @@ export function LogoutButton() {
         router.push("/");
         router.refresh();
       }}
-      className="text-sm text-stone-500 transition-colors hover:text-stone-900"
+      className="cursor-pointer text-sm text-ink-soft transition-colors duration-150 hover:text-foreground"
     >
       Log out
     </button>

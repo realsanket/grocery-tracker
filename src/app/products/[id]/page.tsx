@@ -5,14 +5,16 @@ import {
   Badge,
   Card,
   EmptyState,
+  Money,
   PageHeader,
   Table,
   Td,
   Th,
 } from "@/components/ui/primitives";
+import { PriceCompareBars } from "@/components/products/price-compare-bars";
+import { PriceHistoryChart } from "@/components/products/price-history-chart";
 import {
   formatDate,
-  formatEffectivePrice,
   formatPrice,
   formatSize,
   formatWeight,
@@ -35,10 +37,23 @@ export default async function ProductDetailPage({
   const cheapest = prices[0];
   const isWeightedProduct = prices.some((p) => p.isWeighted);
 
+  const chartPoints = history
+    .map((h) => {
+      const v = h.isWeighted
+        ? h.pricePerKg
+        : (h.unitPrice ?? h.lineTotal);
+      return {
+        storeName: h.storeName,
+        date: (h.observedDate ?? h.createdAt?.toISOString().slice(0, 10)) as string,
+        value: v != null ? parseFloat(String(v)) : NaN,
+      };
+    })
+    .filter((p) => Number.isFinite(p.value));
+
   return (
     <div>
       <div className="mb-1 text-sm">
-        <Link href="/products" className="text-stone-400 hover:text-stone-600">
+        <Link href="/products" className="cursor-pointer text-ink-faint hover:text-ink-soft">
           ← Products
         </Link>
       </div>
@@ -46,67 +61,62 @@ export default async function ProductDetailPage({
         title={`${product.canonicalNameEn}${size ? ` ${size}` : ""}`}
         subtitle={[product.brand, product.categoryEn].filter(Boolean).join(" · ") || undefined}
         action={
-          isWeightedProduct ? <Badge tone="amber">sold by weight — compared per kg</Badge> : undefined
+          isWeightedProduct ? (
+            <Badge tone="amber">sold by weight — compared per kg</Badge>
+          ) : undefined
         }
       />
 
+      {cheapest && prices.length > 1 && (
+        <Card className="mb-6 border-primary/25 bg-emerald-50/40 p-5">
+          <p className="text-sm text-ink-soft">Best price right now</p>
+          <p className="mt-1 text-lg">
+            <Money className="text-2xl font-semibold text-primary-strong">
+              {formatPrice(cheapest.effectivePrice, cheapest.currency)}
+              {cheapest.isWeighted ? "/kg" : ""}
+            </Money>{" "}
+            <span className="text-ink-soft">
+              at <span className="font-medium text-foreground">{cheapest.storeName}</span>
+            </span>
+          </p>
+        </Card>
+      )}
+
       <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold tracking-tight">Latest price by store</h2>
+        <h2 className="mb-3 font-mono text-lg font-semibold tracking-tight">
+          Price by store
+        </h2>
         {prices.length === 0 ? (
           <EmptyState title="No price observations yet" />
         ) : (
-          <Card>
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Store</Th>
-                  <Th>{isWeightedProduct ? "Price / kg" : "Price"}</Th>
-                  <Th>Line total</Th>
-                  <Th>Observed</Th>
-                  <Th></Th>
-                </tr>
-              </thead>
-              <tbody>
-                {prices.map((p, i) => (
-                  <tr key={p.storeId} className={i === 0 ? "bg-emerald-50/40" : undefined}>
-                    <Td>
-                      <Link
-                        href={`/stores/${p.storeId}`}
-                        className="font-medium text-stone-900 hover:underline"
-                      >
-                        {p.storeName}
-                      </Link>
-                      {p.storeCity && (
-                        <span className="ml-1.5 text-xs text-stone-400">{p.storeCity}</span>
-                      )}
-                    </Td>
-                    <Td
-                      className={
-                        i === 0 ? "font-semibold text-emerald-700" : "font-medium"
-                      }
-                    >
-                      {formatEffectivePrice(p.effectivePrice, p.isWeighted, p.currency)}
-                    </Td>
-                    <Td className="text-stone-500">{formatPrice(p.lineTotal, p.currency)}</Td>
-                    <Td className="text-stone-500">{formatDate(p.observedDate)}</Td>
-                    <Td>{i === 0 && prices.length > 1 && <Badge tone="green">cheapest</Badge>}</Td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+          <Card className="p-5">
+            <PriceCompareBars prices={prices} />
           </Card>
-        )}
-        {cheapest && prices.length > 1 && (
-          <p className="mt-2 text-sm text-stone-500">
-            Cheapest right now at{" "}
-            <span className="font-medium text-stone-700">{cheapest.storeName}</span> —{" "}
-            {formatEffectivePrice(cheapest.effectivePrice, cheapest.isWeighted, cheapest.currency)}
-          </p>
         )}
       </section>
 
+      {chartPoints.length >= 2 && (
+        <section className="mb-8">
+          <h2 className="mb-3 font-mono text-lg font-semibold tracking-tight">
+            Price over time
+          </h2>
+          <Card className="p-5">
+            <PriceHistoryChart
+              points={chartPoints}
+              unitSuffix={isWeightedProduct ? "/kg" : ""}
+            />
+            <p className="mt-2 text-xs text-ink-faint">
+              Prices fluctuate — every receipt adds a point, so trends build up over the
+              months. Exact values are in the history table below.
+            </p>
+          </Card>
+        </section>
+      )}
+
       <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold tracking-tight">Price history</h2>
+        <h2 className="mb-3 font-mono text-lg font-semibold tracking-tight">
+          Price history
+        </h2>
         {history.length === 0 ? (
           <EmptyState title="No history yet" />
         ) : (
@@ -125,21 +135,29 @@ export default async function ProductDetailPage({
               <tbody>
                 {history.map((h) => (
                   <tr key={h.id}>
-                    <Td className="text-stone-500">
+                    <Td className="text-ink-soft">
                       {formatDate(h.observedDate ?? h.createdAt)}
                     </Td>
                     <Td>{h.storeName}</Td>
-                    <Td className="text-stone-500">
+                    <Td className="text-ink-soft">
                       {h.isWeighted
                         ? formatWeight(h.weightValue, h.weightUnit) ?? "—"
                         : `${parseFloat(h.quantity)} pc`}
                     </Td>
-                    <Td className="text-stone-500">{formatPrice(h.unitPrice, h.currency)}</Td>
-                    <Td className="text-stone-500">
-                      {h.pricePerKg ? `${formatPrice(h.pricePerKg, h.currency)}/kg` : "—"}
+                    <Td>
+                      <Money className="text-ink-soft">
+                        {formatPrice(h.unitPrice, h.currency)}
+                      </Money>
                     </Td>
-                    <Td className="text-right font-medium">
-                      {formatPrice(h.lineTotal, h.currency)}
+                    <Td>
+                      <Money className="text-ink-soft">
+                        {h.pricePerKg ? `${formatPrice(h.pricePerKg, h.currency)}/kg` : "—"}
+                      </Money>
+                    </Td>
+                    <Td className="text-right">
+                      <Money className="font-medium">
+                        {formatPrice(h.lineTotal, h.currency)}
+                      </Money>
                     </Td>
                   </tr>
                 ))}
@@ -151,17 +169,19 @@ export default async function ProductDetailPage({
 
       {aliases.length > 0 && (
         <section>
-          <h2 className="mb-3 text-lg font-semibold tracking-tight">
+          <h2 className="mb-3 font-mono text-lg font-semibold tracking-tight">
             Seen on receipts as
           </h2>
           <Card className="p-4">
             <ul className="flex flex-wrap gap-2">
               {aliases.map((a) => (
                 <li key={a.id}>
-                  <span className="inline-flex items-center gap-1.5 rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1 text-sm">
-                    <span className="font-mono text-stone-700">{a.aliasTextOriginal}</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-line bg-muted px-2.5 py-1 text-sm">
+                    <span className="font-mono text-foreground/80">
+                      {a.aliasTextOriginal}
+                    </span>
                     {a.storeName && (
-                      <span className="text-xs text-stone-400">({a.storeName})</span>
+                      <span className="text-xs text-ink-faint">({a.storeName})</span>
                     )}
                   </span>
                 </li>

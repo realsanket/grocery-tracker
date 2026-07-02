@@ -4,11 +4,13 @@ import {
   Badge,
   Card,
   EmptyState,
+  Money,
   PageHeader,
   Table,
   Td,
   Th,
 } from "@/components/ui/primitives";
+import { ArrowDownIcon, SearchIcon } from "@/components/ui/icons";
 import {
   formatDate,
   formatEffectivePrice,
@@ -38,13 +40,18 @@ export default async function ProductsPage({
       />
 
       <form method="GET" className="mb-4">
-        <input
-          type="search"
-          name="q"
-          defaultValue={search}
-          placeholder="Search products, brands, categories…"
-          className="w-full max-w-md rounded-lg border border-stone-300 bg-white px-3.5 py-2 text-sm outline-none placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-        />
+        <div className="relative max-w-md">
+          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint">
+            <SearchIcon size={16} />
+          </span>
+          <input
+            type="search"
+            name="q"
+            defaultValue={search}
+            placeholder="Search products, brands, categories…"
+            className="w-full rounded-lg border border-line bg-surface py-2 pl-10 pr-3.5 text-sm outline-none placeholder:text-ink-faint focus:border-primary focus:ring-2 focus:ring-primary/15"
+          />
+        </div>
       </form>
 
       {rows.length === 0 ? (
@@ -62,9 +69,9 @@ export default async function ProductsPage({
             <thead>
               <tr>
                 <Th>Product</Th>
-                <Th>Brand</Th>
                 <Th>Category</Th>
-                <Th>Cheapest price</Th>
+                <Th>Cheapest at</Th>
+                <Th className="text-right">Savings vs priciest</Th>
                 <Th className="text-right">Stores</Th>
                 <Th>Last seen</Th>
               </tr>
@@ -73,32 +80,34 @@ export default async function ProductsPage({
               {rows.map((p) => {
                 const size = formatSize(p.sizeValue, p.sizeUnit);
                 return (
-                  <tr key={p.id} className="hover:bg-stone-50">
+                  <tr key={p.id} className="group hover:bg-muted/50">
                     <Td>
                       <Link
                         href={`/products/${p.id}`}
-                        className="font-medium text-stone-900 hover:underline"
+                        className="cursor-pointer font-medium text-foreground group-hover:underline"
                       >
                         {p.canonicalNameEn}
                       </Link>
-                      {size && <span className="ml-1.5 text-stone-400">{size}</span>}
+                      {size && <span className="ml-1.5 text-ink-faint">{size}</span>}
+                      {p.brand && (
+                        <span className="ml-1.5 text-xs text-ink-faint">· {p.brand}</span>
+                      )}
                       {p.isWeighted && (
                         <span className="ml-2">
-                          <Badge tone="amber">by weight</Badge>
+                          <Badge tone="amber">per kg</Badge>
                         </span>
                       )}
                     </Td>
-                    <Td className="text-stone-500">{p.brand ?? "—"}</Td>
-                    <Td className="text-stone-500">{p.categoryEn ?? "—"}</Td>
+                    <Td className="text-ink-soft">{p.categoryEn ?? "—"}</Td>
                     <Td>
                       {p.cheapestPrice ? (
                         <>
-                          <span className="font-medium text-emerald-700">
+                          <Money className="font-semibold text-primary-strong">
                             {formatEffectivePrice(p.cheapestPrice, p.isWeighted)}
-                          </span>
+                          </Money>
                           {p.cheapestStore && (
-                            <span className="ml-1.5 text-xs text-stone-400">
-                              at {p.cheapestStore}
+                            <span className="ml-1.5 text-xs text-ink-faint">
+                              {p.cheapestStore}
                             </span>
                           )}
                         </>
@@ -106,8 +115,17 @@ export default async function ProductsPage({
                         "—"
                       )}
                     </Td>
+                    <Td className="text-right">
+                      {p.savingsPct != null && p.savingsPct > 0 ? (
+                        <Badge tone="green">
+                          <ArrowDownIcon size={12} /> {p.savingsPct}%
+                        </Badge>
+                      ) : (
+                        <span className="text-ink-faint">—</span>
+                      )}
+                    </Td>
                     <Td className="text-right tabular-nums">{p.storeCount}</Td>
-                    <Td className="text-stone-500">{formatDate(p.lastSeen)}</Td>
+                    <Td className="text-ink-soft">{formatDate(p.lastSeen)}</Td>
                   </tr>
                 );
               })}
@@ -117,14 +135,14 @@ export default async function ProductsPage({
       )}
 
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-stone-500">
+        <div className="mt-4 flex items-center justify-between text-sm text-ink-soft">
           <span>
             Page {page} of {totalPages}
           </span>
           <div className="flex gap-2">
             {page > 1 && (
               <Link
-                className="rounded-md border border-stone-300 bg-white px-3 py-1.5 hover:bg-stone-50"
+                className="cursor-pointer rounded-md border border-line bg-surface px-3 py-1.5 hover:bg-muted"
                 href={`/products?q=${encodeURIComponent(search)}&page=${page - 1}`}
               >
                 Previous
@@ -132,7 +150,7 @@ export default async function ProductsPage({
             )}
             {page < totalPages && (
               <Link
-                className="rounded-md border border-stone-300 bg-white px-3 py-1.5 hover:bg-stone-50"
+                className="cursor-pointer rounded-md border border-line bg-surface px-3 py-1.5 hover:bg-muted"
                 href={`/products?q=${encodeURIComponent(search)}&page=${page + 1}`}
               >
                 Next

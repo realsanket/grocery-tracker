@@ -23,6 +23,9 @@ export interface ProductListRow {
   isWeighted: boolean;
   cheapestPrice: string | null;
   cheapestStore: string | null;
+  priciestPrice: string | null;
+  priciestStore: string | null;
+  savingsPct: number | null;
   storeCount: number;
   lastSeen: string | null;
 }
@@ -53,6 +56,9 @@ export async function listProducts(opts: {
     is_weighted: boolean;
     cheapest_price: string | null;
     cheapest_store: string | null;
+    priciest_price: string | null;
+    priciest_store: string | null;
+    savings_pct: number | null;
     store_count: number;
     last_seen: string | null;
     total: number;
@@ -75,8 +81,10 @@ export async function listProducts(opts: {
         count(distinct lps.store_id)::int as store_count,
         max(coalesce(lps.observed_date, lps.created_at::date))::text as last_seen,
         min(lps.effective_price) as cheapest_price,
+        max(lps.effective_price) as priciest_price,
         bool_or(lps.is_weighted) as is_weighted,
-        (array_agg(s.name order by lps.effective_price asc))[1] as cheapest_store
+        (array_agg(s.name order by lps.effective_price asc))[1] as cheapest_store,
+        (array_agg(s.name order by lps.effective_price desc))[1] as priciest_store
       from latest_per_store lps
       join stores s on s.id = lps.store_id
       group by lps.product_id
@@ -87,6 +95,11 @@ export async function listProducts(opts: {
       coalesce(a.is_weighted, false) as is_weighted,
       a.cheapest_price::text as cheapest_price,
       a.cheapest_store,
+      a.priciest_price::text as priciest_price,
+      a.priciest_store,
+      case when a.store_count >= 2 and a.priciest_price > a.cheapest_price
+        then round((a.priciest_price - a.cheapest_price) / nullif(a.priciest_price, 0) * 100)::int
+      end as savings_pct,
       coalesce(a.store_count, 0) as store_count,
       a.last_seen,
       count(*) over ()::int as total
@@ -107,6 +120,9 @@ export async function listProducts(opts: {
     isWeighted: r.is_weighted,
     cheapestPrice: r.cheapest_price,
     cheapestStore: r.cheapest_store,
+    priciestPrice: r.priciest_price,
+    priciestStore: r.priciest_store,
+    savingsPct: r.savings_pct,
     storeCount: r.store_count,
     lastSeen: r.last_seen,
   }));

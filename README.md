@@ -35,9 +35,9 @@ cp .env.example .env.local   # then fill in values
 |---|---|
 | `DATABASE_URL` | Neon connection string. Use the `-pooler` host for serverless. |
 | `AZURE_OPENAI_ENDPOINT` | OpenAI-compatible v1 endpoint, e.g. `https://<resource>.services.ai.azure.com/openai/v1` |
-| `AZURE_OPENAI_API_KEY` | Azure AI resource key. **Leave empty to use the built-in mock extractor** (app works end-to-end with demo data, no AI calls). |
+| `AZURE_OPENAI_API_KEY` | Azure AI resource key. Without it uploads fail unless `ALLOW_MOCK_EXTRACTOR=true` (explicit demo mode — never silent). |
 | `AZURE_OPENAI_DEPLOYMENT` | Deployment name, e.g. `gpt-5-mini` (must support image input). |
-| `ADMIN_PASSWORD` | Password for the admin login at `/login`. |
+| `ADMIN_PASSWORD` | Password for the admin login at `/admin` (the login is not linked anywhere public). |
 | `AUTH_SECRET` | Session-cookie signing key: `openssl rand -hex 32` |
 
 ### Database
@@ -66,6 +66,9 @@ pnpm build && pnpm start
    vision model, which returns strict JSON: store, date, currency, and purchased items
    only (payment/VAT/terminal lines are ignored), already translated to English.
    The response is validated with Zod (`src/lib/ai/types.ts`), one retry on bad JSON.
+   **Nothing is persisted yet** — the draft goes back to the upload page, where the
+   admin reviews and edits every field (fix misread prices, remove non-product lines,
+   add missing items) before saving via `POST /api/receipts/commit`.
 4. `src/db/mutations/ingest-receipt.ts` normalizes each item
    (`src/lib/normalization/`):
    - deterministic `normalized_key` for deduplication —
@@ -92,14 +95,15 @@ only depends on the Zod-validated `ReceiptExtractionResult`.
 
 | Route | Auth | Purpose |
 |---|---|---|
-| `POST /api/receipts/extract` | admin | multipart `file` → extract + persist, returns summary |
+| `POST /api/receipts/extract` | admin | multipart `file` → extraction draft (nothing persisted) |
+| `POST /api/receipts/commit` | admin | reviewed/edited draft → persist products + observations |
 | `GET /api/products?search=&page=` | public | product list with cheapest price + store count |
 | `GET /api/products/:id` | public | latest price per store, history, aliases |
 | `GET /api/stores`, `GET /api/stores/:id` | public | stores and their latest observed prices |
 | `POST /api/auth/login` / `logout` | — | admin session cookie |
 
 Route protection lives in `src/proxy.ts` (Next 16 proxy/middleware): unauthenticated
-`/upload` redirects to `/login`; `POST /api/receipts/*` returns 401.
+`/upload` redirects to `/admin`; `POST /api/receipts/*` returns 401.
 
 ## Deployment (Vercel + Neon, both free tiers)
 

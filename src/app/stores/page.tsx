@@ -33,22 +33,22 @@ export default async function StoresPage() {
             </thead>
             <tbody>
               {stores.map((s) => (
-                <tr key={s.id} className="hover:bg-stone-50">
+                <tr key={s.id} className="hover:bg-muted/50">
                   <Td>
                     <Link
                       href={`/stores/${s.id}`}
-                      className="font-medium text-stone-900 hover:underline"
+                      className="font-medium text-foreground hover:underline"
                     >
                       {s.name}
                     </Link>
                     {s.chain && (
-                      <span className="ml-1.5 text-xs text-stone-400">{s.chain}</span>
+                      <span className="ml-1.5 text-xs text-ink-faint">{s.chain}</span>
                     )}
                   </Td>
-                  <Td className="text-stone-500">{s.city ?? "—"}</Td>
-                  <Td className="text-stone-500">{s.country}</Td>
+                  <Td className="text-ink-soft">{s.city ?? "—"}</Td>
+                  <Td className="text-ink-soft">{s.country}</Td>
                   <Td className="text-right tabular-nums">{s.productCount}</Td>
-                  <Td className="text-stone-500">{formatDate(s.lastObservation)}</Td>
+                  <Td className="text-ink-soft">{formatDate(s.lastObservation)}</Td>
                 </tr>
               ))}
             </tbody>

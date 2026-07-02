@@ -8,7 +8,7 @@ export default function UploadPage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Upload receipt"
-        subtitle="Product lines are extracted, translated to English and saved as price observations. The image itself is discarded."
+        subtitle="Products are extracted and translated to English, then you review and edit everything before it is saved. The image itself is discarded."
       />
       <ReceiptUploader />
     </div>

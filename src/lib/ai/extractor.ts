@@ -92,8 +92,15 @@ export function getExtractor(): ReceiptExtractor {
   if (endpoint && apiKey) {
     return new AzureOpenAIExtractor({ endpoint, apiKey, deployment });
   }
-  console.warn(
-    "AZURE_OPENAI_API_KEY not set — using the mock receipt extractor. Uploads will produce demo data.",
+
+  // The mock must be opted into explicitly — silently returning demo data for a
+  // real receipt would poison the price database.
+  if (process.env.ALLOW_MOCK_EXTRACTOR === "true") {
+    console.warn("Using the mock receipt extractor (ALLOW_MOCK_EXTRACTOR=true).");
+    return new MockExtractor();
+  }
+  throw new ExtractionError(
+    "Receipt extraction is not configured (AZURE_OPENAI_API_KEY is missing). " +
+      "Set the Azure OpenAI env vars, or set ALLOW_MOCK_EXTRACTOR=true for demo data.",
   );
-  return new MockExtractor();
 }
