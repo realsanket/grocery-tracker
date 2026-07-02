@@ -175,9 +175,9 @@ export default async function ProductDetailPage({
           <Card className="p-4">
             <ul className="flex flex-wrap gap-2">
               {aliases.map((a) => (
-                <li key={a.id}>
-                  <span className="inline-flex items-center gap-1.5 rounded-md border border-line bg-muted px-2.5 py-1 text-sm">
-                    <span className="font-mono text-foreground/80">
+                <li key={a.id} className="max-w-full">
+                  <span className="inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-md border border-line bg-muted px-2.5 py-1 text-sm">
+                    <span className="break-all font-mono text-foreground/80">
                       {a.aliasTextOriginal}
                     </span>
                     {a.storeName && (

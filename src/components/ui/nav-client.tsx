@@ -17,7 +17,7 @@ export function NavLinks({ showUpload }: { showUpload: boolean }) {
     : LINKS;
 
   return (
-    <nav className="flex items-center gap-1 text-sm">
+    <nav className="flex items-center gap-1 whitespace-nowrap text-sm">
       {links.map((link) => {
         const active =
           link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
@@ -25,7 +25,7 @@ export function NavLinks({ showUpload }: { showUpload: boolean }) {
           <Link
             key={link.href}
             href={link.href}
-            className={`cursor-pointer rounded-md px-3 py-1.5 transition-colors duration-150 ${
+            className={`shrink-0 cursor-pointer rounded-md px-3 py-1.5 transition-colors duration-150 ${
               active
                 ? "bg-muted font-medium text-primary-strong"
                 : "text-ink-soft hover:bg-muted/70 hover:text-foreground"
