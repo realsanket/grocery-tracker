@@ -42,16 +42,13 @@ export async function validateAndReencodeReceiptImage(
 
   // Lazy import: if the native module fails to load in some runtime, the
   // route degrades to a clean JSON error instead of crashing at cold start.
-  let sharp: (typeof import("sharp"))["default"];
+  let sharp: typeof import("sharp");
   try {
-    sharp = (await import("sharp")).default;
+    const mod = await import("sharp");
+    sharp = (mod as { default?: typeof import("sharp") }).default ?? (mod as unknown as typeof import("sharp"));
   } catch (err) {
     console.error("sharp failed to load:", err);
-    // TEMP DIAGNOSTIC: surface load error detail
-    return {
-      ok: false,
-      reason: `Image processing is unavailable: ${err instanceof Error ? err.message.slice(0, 300) : String(err).slice(0, 300)}`,
-    };
+    return { ok: false, reason: "Image processing is unavailable right now." };
   }
 
   try {
