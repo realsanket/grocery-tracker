@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/icons";
 import { formatDate, formatEffectivePrice } from "@/lib/utils/format";
 import { isAdmin } from "@/lib/auth/session";
+import { countPendingReceipts } from "@/db/mutations/pending-receipts";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,9 @@ export default async function DashboardPage() {
     getBestPriceDifferences(6),
     isAdmin(),
   ]);
-  const runs = admin ? await getRecentExtractionRuns(6) : [];
+  const [runs, pendingCount] = admin
+    ? await Promise.all([getRecentExtractionRuns(6), countPendingReceipts()])
+    : [[], 0];
 
   return (
     <div>
@@ -154,6 +157,18 @@ export default async function DashboardPage() {
           </Card>
         )}
       </section>
+
+      {admin && pendingCount > 0 && (
+        <Card className="mt-10 border-amber-200 bg-amber-50/50 p-4">
+          <p className="text-sm font-medium text-amber-800">
+            {pendingCount} public submission{pendingCount === 1 ? "" : "s"} waiting for
+            review —{" "}
+            <Link href="/upload" className="cursor-pointer underline">
+              open the queue
+            </Link>
+          </p>
+        </Card>
+      )}
 
       {admin && (
         <section className="mt-10">
