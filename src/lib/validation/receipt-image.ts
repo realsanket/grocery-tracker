@@ -47,7 +47,11 @@ export async function validateAndReencodeReceiptImage(
     sharp = (await import("sharp")).default;
   } catch (err) {
     console.error("sharp failed to load:", err);
-    return { ok: false, reason: "Image processing is unavailable right now." };
+    // TEMP DIAGNOSTIC: surface load error detail
+    return {
+      ok: false,
+      reason: `Image processing is unavailable: ${err instanceof Error ? err.message.slice(0, 300) : String(err).slice(0, 300)}`,
+    };
   }
 
   try {
