@@ -1,5 +1,3 @@
-import sharp from "sharp";
-
 /**
  * Hard server-side validation for publicly submitted receipt images.
  *
@@ -40,6 +38,16 @@ export async function validateAndReencodeReceiptImage(
   const kind = sniffImageType(input);
   if (!kind) {
     return { ok: false, reason: "Not a valid JPG, PNG or WEBP image." };
+  }
+
+  // Lazy import: if the native module fails to load in some runtime, the
+  // route degrades to a clean JSON error instead of crashing at cold start.
+  let sharp: (typeof import("sharp"))["default"];
+  try {
+    sharp = (await import("sharp")).default;
+  } catch (err) {
+    console.error("sharp failed to load:", err);
+    return { ok: false, reason: "Image processing is unavailable right now." };
   }
 
   try {

@@ -19,6 +19,18 @@ function ipHashFromRequest(request: Request): string {
 }
 
 export async function POST(request: Request) {
+  try {
+    return await handleSubmit(request);
+  } catch (err) {
+    console.error("Receipt submission failed:", err);
+    return NextResponse.json(
+      { success: false, error: "Unexpected error — try again later." },
+      { status: 500 },
+    );
+  }
+}
+
+async function handleSubmit(request: Request) {
   const form = await request.formData().catch(() => null);
   const file = form?.get("file");
   if (!(file instanceof File)) {
