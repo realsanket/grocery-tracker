@@ -155,10 +155,32 @@ const inputCls =
   "w-full rounded-md border border-line bg-white px-2.5 py-1.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
 const labelCls = "mb-1 block text-xs font-medium text-ink-soft";
 
-export function ReceiptUploader() {
-  const [state, setState] = useState<UploadState>({ phase: "idle" });
+export interface UploaderPreset {
+  draft: ReceiptExtractionResult;
+  filename: string;
+  /** When reviewing a queued public submission — deleted on successful save. */
+  pendingReceiptId: string;
+}
+
+export function ReceiptUploader({
+  preset,
+  onExit,
+}: {
+  preset?: UploaderPreset;
+  onExit?: () => void;
+} = {}) {
+  const [state, setState] = useState<UploadState>(() =>
+    preset
+      ? { phase: "review", draft: toDraft(preset.draft), filename: preset.filename }
+      : { phase: "idle" },
+  );
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const exitOrReset = () => {
+    if (onExit) onExit();
+    else setState({ phase: "idle" });
+  };
 
   const processFile = useCallback(async (file: File) => {
     if (!ACCEPTED.includes(file.type)) {
@@ -195,7 +217,11 @@ export function ReceiptUploader() {
       const res = await fetch("/api/receipts/commit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ extraction: fromDraft(draft), sourceFilename: filename }),
+        body: JSON.stringify({
+          extraction: fromDraft(draft),
+          sourceFilename: filename,
+          pendingReceiptId: preset?.pendingReceiptId ?? null,
+        }),
       });
       const data: CommitResponse = await res.json().catch(() => ({
         success: false,
@@ -211,7 +237,7 @@ export function ReceiptUploader() {
       setState({ phase: "review", draft, filename });
       alert("Network error while saving — try again.");
     }
-  }, []);
+  }, [preset]);
 
   /* ---------- dropzone ---------- */
 
@@ -516,7 +542,7 @@ export function ReceiptUploader() {
           </button>
           <div className="ml-auto flex items-center gap-3">
             <button
-              onClick={() => setState({ phase: "idle" })}
+              onClick={exitOrReset}
               disabled={saving}
               className="cursor-pointer rounded-lg px-4 py-2 text-sm text-ink-soft hover:text-foreground disabled:opacity-50"
             >
@@ -620,10 +646,10 @@ export function ReceiptUploader() {
       )}
 
       <button
-        onClick={() => setState({ phase: "idle" })}
+        onClick={exitOrReset}
         className="cursor-pointer rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium text-ink-soft transition-colors duration-150 hover:bg-muted"
       >
-        Upload another receipt
+        {preset ? "Back to queue" : "Upload another receipt"}
       </button>
     </div>
   );

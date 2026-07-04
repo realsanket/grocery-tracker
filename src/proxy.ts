@@ -12,6 +12,10 @@ export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/api/receipts")) {
+    // The public may queue a receipt for review; everything else is admin-only.
+    if (pathname === "/api/receipts/submit") {
+      return NextResponse.next();
+    }
     if (!authed) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

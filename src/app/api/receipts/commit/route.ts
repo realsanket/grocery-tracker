@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { receiptExtractionResultSchema } from "@/lib/ai/types";
 import { ingestReceipt } from "@/db/mutations/ingest-receipt";
+import { deletePendingReceipt } from "@/db/mutations/pending-receipts";
 
 const bodySchema = z.object({
   extraction: receiptExtractionResultSchema,
   sourceFilename: z.string().max(300).nullish(),
+  pendingReceiptId: z.uuid().nullish(),
 });
 
 /**
@@ -26,6 +28,10 @@ export async function POST(request: Request) {
       parsed.data.extraction,
       parsed.data.sourceFilename ?? undefined,
     );
+    // Data is saved — the source image has served its purpose; delete it.
+    if (parsed.data.pendingReceiptId) {
+      await deletePendingReceipt(parsed.data.pendingReceiptId).catch(() => {});
+    }
     return NextResponse.json({
       success: true,
       store: result.store,

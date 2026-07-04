@@ -113,6 +113,24 @@ export const priceObservations = pgTable(
   ],
 );
 
+/**
+ * Public receipt submissions waiting for admin review. Transient by design:
+ * processing or rejecting a submission deletes the row (and with it the image).
+ * The stored image is always a server-side re-encoded JPEG.
+ */
+export const pendingReceipts = pgTable(
+  "pending_receipts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    imageBase64: text("image_base64").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    sourceFilename: text("source_filename"),
+    submitterIpHash: text("submitter_ip_hash"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("pending_receipts_ip_created_idx").on(t.submitterIpHash, t.createdAt)],
+);
+
 export const extractionRuns = pgTable("extraction_runs", {
   id: uuid("id").primaryKey().defaultRandom(),
   sourceFilename: text("source_filename"),

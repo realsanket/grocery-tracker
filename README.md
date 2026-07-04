@@ -9,10 +9,18 @@ to English).
 
 | Stored | Never stored |
 |---|---|
-| Stores (name, city) | Receipt images |
+| Stores (name, city) | Receipt images (see queue note below) |
 | Canonical English products + sizes | Full OCR text |
 | Raw receipt names as product aliases | Card / payment / terminal data |
 | Price observations (price, weight, €/kg, date) | VAT & footer lines |
+
+**Public submission queue:** visitors can submit receipt photos at `/submit` without an
+account. No AI runs at submission. Each image is hard-validated (magic-byte sniffing —
+only real JPG/PNG/WEBP, so PDFs/malware are rejected) and **fully re-encoded to a plain
+JPEG with sharp** (destroys any embedded payload), rate-limited to 10/hour per IP with a
+30-item queue cap, and held in Postgres only until the admin processes (AI extract →
+review/edit → save) or rejects it — either action deletes the image. Untouched
+submissions auto-purge after 14 days.
 
 Only the admin can upload receipts (password login). Browsing and price comparison
 are public.
@@ -96,7 +104,9 @@ only depends on the Zod-validated `ReceiptExtractionResult`.
 | Route | Auth | Purpose |
 |---|---|---|
 | `POST /api/receipts/extract` | admin | multipart `file` → extraction draft (nothing persisted) |
-| `POST /api/receipts/commit` | admin | reviewed/edited draft → persist products + observations |
+| `POST /api/receipts/commit` | admin | reviewed/edited draft → persist products + observations (deletes the queued image if one was the source) |
+| `POST /api/receipts/submit` | public | queue a receipt photo for admin review (validated, re-encoded, rate-limited) |
+| `GET /api/receipts/pending` + `/[id]/image`, `POST /[id]/extract`, `DELETE /[id]` | admin | manage the submission queue |
 | `GET /api/products?search=&page=` | public | product list with cheapest price + store count |
 | `GET /api/products/:id` | public | latest price per store, history, aliases |
 | `GET /api/stores`, `GET /api/stores/:id` | public | stores and their latest observed prices |
